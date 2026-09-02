@@ -6,6 +6,7 @@ import { EMAIL_QUEUE_NAME, EmailJobPayload, enqueueEmailJob } from '../queues/em
 import { sendEmailViaSmtp, getNextRoundrobinSender } from '../services/smtp.Service';
 import { checkAndConsumeRateLimit, canSendSlackAlert } from '../services/rateLimiterService';
 import { sendRateLimitSlackAlert } from '../services/slackService'
+import { logEmailEvent } from '../services/elasticService';
 
 const prisma = new PrismaClient();
 
@@ -82,6 +83,17 @@ export const emailWorker = new Worker<EmailJobPayload>(
                     data: { status: 'delayed_rate_limit' },
                 });
 
+
+            await logEmailEvent({
+                jobId: emailJob.id,
+                campaignId: emailJob.campaignId,
+                senderId: sender.id,
+                recipientEmail: emailJob.recipientEmail,
+                status: 'delayed_rate_limit',
+                errorMessage: rateLimit.reason,
+            });
+
+
             await enqueueEmailJob(emailJob.id, retryTime, emailJob.bullJobId);
             return;
         }
@@ -118,6 +130,15 @@ export const emailWorker = new Worker<EmailJobPayload>(
                 },
             });
 
+            await logEmailEvent({
+                jobId: emailJob.id,
+                campaignId: emailJob.campaignId,
+                senderId: sender.id,
+                recipientEmail: emailJob.recipientEmail,
+                status: 'sent',
+            });
+
+
             console.log(`[Worker] SUCCESS: Delivered to ${emailJob.recipientEmail}`);
             if (result.previewUrl) {
                 console.log(`[Worker] Ethereal Preview URL: ${result.previewUrl}`);
@@ -131,6 +152,17 @@ export const emailWorker = new Worker<EmailJobPayload>(
                     errorMessage: error.message || 'SMTP send failed',
                 },
             });
+
+            await logEmailEvent({
+                jobId: emailJob.id,
+                campaignId: emailJob.campaignId,
+                senderId: sender?.id,
+                recipientEmail: emailJob.recipientEmail,
+                status: 'failed',
+                errorMessage: error.message || 'SMTP send failed',
+            });
+
+
             throw error;
         }
     },
