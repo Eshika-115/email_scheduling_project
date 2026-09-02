@@ -80,7 +80,7 @@ export async function checkAndConsumeRateLimit(
 
 // slack alert check kr rhe
 
-export async function shouldSendSlackAlert(senderId: string): Promise<boolean> {
+export async function canSendSlackAlert(senderId: string): Promise<boolean> {
     const hourBucket = getCurrentHourBucket();
     const lockKey = `ratelimit:notified:${senderId}:${hourBucket}`;
 

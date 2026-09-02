@@ -4,8 +4,8 @@ import { PrismaClient } from '@prisma/client';
 import { redisConnection } from '../config/redis';
 import { EMAIL_QUEUE_NAME, EmailJobPayload, enqueueEmailJob } from '../queues/emailQueue';
 import { sendEmailViaSmtp, getNextRoundrobinSender } from '../services/smtp.Service';
-import { checkAndConsumeRateLimit } from '../services/rateLimiterService';
-
+import { checkAndConsumeRateLimit, canSendSlackAlert } from '../services/rateLimiterService';
+import { sendRateLimitSlackAlert } from '../services/slackService'
 
 const prisma = new PrismaClient();
 
@@ -64,6 +64,13 @@ export const emailWorker = new Worker<EmailJobPayload>(
 
             const retryTime = rateLimit.retryAt || new Date(Date.now() + 3600000);
 
+            const notify = await canSendSlackAlert(sender.id);
+
+            if (notify) {
+                await sendRateLimitSlackAlert(sender.email, sender.maxEmailsPerHour || 50);
+            }
+
+
 
             // db me status ko send kr rhe 
 
@@ -72,7 +79,7 @@ export const emailWorker = new Worker<EmailJobPayload>(
                 {
 
                     where: { id: emailJobId },
-                    data: { status: 'delayratelimit' },
+                    data: { status: 'delayed_rate_limit' },
                 });
 
             await enqueueEmailJob(emailJob.id, retryTime, emailJob.bullJobId);
