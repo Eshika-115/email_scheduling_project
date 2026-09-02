@@ -14,3 +14,7 @@ Thumbs.db
 
 *.log
 naina.md
+.agents/
+.claude/
+.cursor/
+.devin/

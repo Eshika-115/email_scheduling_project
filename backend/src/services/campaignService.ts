@@ -1,7 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-
 const prisma = new PrismaClient();
-
 export interface CreateCampaignInput {
     userId: string;
     subject: string;
@@ -30,7 +28,7 @@ export async function createCampaign(input: CreateCampaignInput) {
 
     const scheduledBase = startTime ? new Date(startTime) : new Date();
 
-    // Create EmailJob entry  bullJob id  implodency ke liye
+    // Create EmailJob entry  bullJob id  imdompotency  ke liye
     const jobsData = recipientEmails.map((email, index) => {
         const jobScheduledTime = new Date(scheduledBase.getTime() + index * (delaySeconds * 1000));
         return {
@@ -67,7 +65,8 @@ export async function updateJobStatus(
             errorMessage: extra?.errorMessage,
             attemptCount: { increment: 1 },
         },
-    });
+    }
+    );
 }
 
 //  fetch kr rhe h bache wale scheduled jobs
@@ -79,7 +78,8 @@ export async function listScheduledJobs(userId: string) {
         },
         include: { campaign: true, sender: true },
         orderBy: { scheduledFor: 'asc' },
-    });
+    }
+    );
 }
 
 //  fetch kr rhe h jo complete sent jobs h jo
