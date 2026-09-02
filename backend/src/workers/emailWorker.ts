@@ -2,8 +2,10 @@ import { Worker, Job } from 'bullmq';
 
 import { PrismaClient } from '@prisma/client';
 import { redisConnection } from '../config/redis';
-import { EMAIL_QUEUE_NAME, EmailJobPayload } from '../queues/emailQueue';
+import { EMAIL_QUEUE_NAME, EmailJobPayload, enqueueEmailJob } from '../queues/emailQueue';
 import { sendEmailViaSmtp, getNextRoundrobinSender } from '../services/smtp.Service';
+import { checkAndConsumeRateLimit } from '../services/rateLimiterService';
+
 
 const prisma = new PrismaClient();
 
@@ -39,33 +41,55 @@ export const emailWorker = new Worker<EmailJobPayload>(
             return;
         }
 
-        // db me status ko send kr rhe 
-
-
-        await prisma.emailJob.update(
-            {
-
-                where: { id: emailJobId },
-                data: { status: 'sending', attemptCount: { increment: 1 } },
-            });
-
-        //  for user ke sender select kr rhe h
 
         const sender = await getNextRoundrobinSender(emailJob.campaign.userId, job.attemptsMade);
         if (!sender) {
-
-            const err = 'No active SMTP sender available for user.';
+            const err = 'No active SMTP sender avialable';
 
             console.error(`[Worker] ${err}`);
             await prisma.emailJob.update({
                 where: { id: emailJobId },
-                data: { status: 'failed', errorMessage: err },
+                data: {
+                    status: 'failed', errorMessage: err
+                },
             });
 
             throw new Error(err);
+
+
+
+        } const rateLimit = await checkAndConsumeRateLimit(sender.id, sender.maxEmailsPerHour);
+        if (!rateLimit.allowed) {
+            console.warn(`[Worker] Rate Limit Blocked for Sender ${sender.email}: ${rateLimit.reason}`);
+
+            const retryTime = rateLimit.retryAt || new Date(Date.now() + 3600000);
+
+
+            // db me status ko send kr rhe 
+
+
+            await prisma.emailJob.update(
+                {
+
+                    where: { id: emailJobId },
+                    data: { status: 'delayratelimit' },
+                });
+
+            await enqueueEmailJob(emailJob.id, retryTime, emailJob.bullJobId);
+            return;
         }
+        // sending hai status
+        await prisma.emailJob.update({
+            where: { id: emailJobId },
+            data: {
+                status: 'sending', attemptCount: {
+                    increment: 1
+                }
+            },
+        });
 
 
+        // nodemailer se mail bhj rhe 
         try {
             const result = await sendEmailViaSmtp({
                 sender,
@@ -73,6 +97,9 @@ export const emailWorker = new Worker<EmailJobPayload>(
                 subject: emailJob.campaign.subject,
                 html: emailJob.campaign.bodyTemplate.replace('{{email}}', emailJob.recipientEmail),
             });
+
+
+
 
             // Update db
             await prisma.emailJob.update({
