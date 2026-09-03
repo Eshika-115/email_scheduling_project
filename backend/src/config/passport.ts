@@ -19,8 +19,8 @@ if (isProduction && callbackURL.includes('localhost')) {
 passport.use(
     new GoogleStrategy(
         {
-            clientID: process.env.GOOGLE_CLIENT_ID || 'google-demo-client-id',
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'google-demo-client-secret',
+            clientID: process.env.GOOGLE_CLIENT_ID || '560786438474-f2qovsksrt1oe0rsubkalcv4i6o4r0ca.apps.googleusercontent.com',
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET || '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',
             callbackURL,
         },
         async (accessToken, refreshToken, profile, done) => {

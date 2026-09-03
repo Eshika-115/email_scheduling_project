@@ -19,15 +19,22 @@ const getFrontendUrl = () => {
 };
 
 // google oauth callback route
-router.get(
-  '/auth/google/callback',
-  (req, res, next) => {
-    passport.authenticate('google', { failureRedirect: getFrontendUrl() })(req, res, next);
-  },
-  (req, res) => {
-    res.redirect(getFrontendUrl());
-  }
-);
+router.get('/auth/google/callback', (req, res, next) => {
+  passport.authenticate('google', (err: any, user: any, info: any) => {
+    const frontendUrl = getFrontendUrl();
+    if (err || !user) {
+      console.error('Google Auth Error:', err || info);
+      return res.redirect(frontendUrl);
+    }
+    req.logIn(user, (loginErr) => {
+      if (loginErr) {
+        console.error('Login Session Error:', loginErr);
+        return res.redirect(frontendUrl);
+      }
+      return res.redirect(frontendUrl);
+    });
+  })(req, res, next);
+});
 
 // current session status check 
 
