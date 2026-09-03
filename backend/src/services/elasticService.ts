@@ -1,7 +1,12 @@
 import { Client } from '@elastic/elasticsearch';
 
-const esUrl = process.env.ELASTICSEARCH_URL || process.env.ELASTICSEARCH_NODE || 'http://localhost:9200';
-const esApiKey = process.env.ELASTICSEARCH_API_KEY;
+const cleanEnv = (val?: string) => (val ? val.trim().replace(/^["']|["']$/g, '') : undefined);
+
+const DEFAULT_ES_URL = 'https://my-elasticsearch-project-b4835d.es.us-east4.gcp.elastic.cloud:443';
+const DEFAULT_ES_KEY = 'UHhSMlpxQUIza2hfbDFfZ1V1U3g6NVVHVk9oZ1UzSFdJU0pmX0Q1REZSQQ==';
+
+const esUrl = cleanEnv(process.env.ELASTICSEARCH_URL) || cleanEnv(process.env.ELASTICSEARCH_NODE) || DEFAULT_ES_URL;
+const esApiKey = cleanEnv(process.env.ELASTICSEARCH_API_KEY) || DEFAULT_ES_KEY;
 
 export const esClient = new Client({
     node: esUrl,
