@@ -8,13 +8,23 @@ const router = Router();
 
 router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
+const getFrontendUrl = () => {
+  if (process.env.FRONTEND_URL) {
+    return process.env.FRONTEND_URL;
+  }
+  return process.env.NODE_ENV === 'production'
+    ? 'https://frontend-xl-blue-19gueprtlq.vercel.app'
+    : 'http://localhost:5173';
+};
+
 // google oauth callback route
 router.get(
   '/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: process.env.FRONTEND_URL || 'http://localhost:5173' }),
+  (req, res, next) => {
+    passport.authenticate('google', { failureRedirect: getFrontendUrl() })(req, res, next);
+  },
   (req, res) => {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    res.redirect(frontendUrl);
+    res.redirect(getFrontendUrl());
   }
 );
 

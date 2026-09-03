@@ -8,13 +8,18 @@ const defaultCallback = process.env.NODE_ENV === 'production'
     ? 'https://outbox-lab-assignment.onrender.com/api/auth/google/callback'
     : 'http://localhost:5000/api/auth/google/callback';
 
+let callbackURL = process.env.GOOGLE_CALLBACK_URL || defaultCallback;
+if (process.env.NODE_ENV === 'production' && callbackURL.includes('localhost')) {
+    callbackURL = 'https://outbox-lab-assignment.onrender.com/api/auth/google/callback';
+}
+
 // google oauth setup 
 passport.use(
     new GoogleStrategy(
         {
             clientID: process.env.GOOGLE_CLIENT_ID || 'google-demo-client-id',
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'google-demo-client-secret',
-            callbackURL: process.env.GOOGLE_CALLBACK_URL || defaultCallback,
+            callbackURL,
         },
         async (accessToken, refreshToken, profile, done) => {
             try {
