@@ -56,7 +56,7 @@ export const emailWorker = new Worker<any>(
     const campaignLimit = emailJob.campaign.hourlyLimit && emailJob.campaign.hourlyLimit > 0 ? emailJob.campaign.hourlyLimit : undefined;
     const effectiveHourlyLimit = campaignLimit || sender.maxEmailsPerHour || 50;
 
-    const rateLimit = await checkAndConsumeRateLimit(sender.id, effectiveHourlyLimit);
+    const rateLimit = await checkAndConsumeRateLimit(sender.id, effectiveHourlyLimit, emailJob.campaignId);
     if (!rateLimit.allowed) {
       console.warn(`[Worker] Rate Limit Blocked for Sender ${sender.email} (Limit: ${effectiveHourlyLimit}/hr): ${rateLimit.reason}`);
 

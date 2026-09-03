@@ -2,42 +2,41 @@ import { redisClient as redis } from '../config/redis';
 
 
 // env se rate limit liya
-const GLOBAL_MAX_PER_HOUR = parseInt(process.env.MAX_EMAILS_PER_HOUR || '200', 10);
-
-const SENDER_MAX_PER_HOUR = parseInt(process.env.MAX_EMAILS_PER_HOUR_PER_SENDER || '50', 10);
+const GLOBAL_MAX_PER_HOUR = parseInt(process.env.MAX_EMAILS_PER_HOUR || '10000', 10);
+const SENDER_MAX_PER_HOUR = parseInt(process.env.MAX_EMAILS_PER_HOUR_PER_SENDER || '1000', 10);
 
 export interface RateLimitCheckResult {
-
-    allowed: boolean;
-    reason?: string;
-    retryAt?: Date;
+  allowed: boolean;
+  reason?: string;
+  retryAt?: Date;
 }
 
 function getCurrentHourBucket(): string {
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(now.getUTCDate()).padStart(2, '0');
-    const hour = String(now.getUTCHours()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hour}`;
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(now.getUTCDate()).padStart(2, '0');
+  const hour = String(now.getUTCHours()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hour}`;
 }
 
 function getNextHourTime(): Date {
-    const nextHour = new Date();
-    nextHour.setUTCHours(nextHour.getUTCHours() + 1, 0, 0, 0);
-    return nextHour;
+  const nextHour = new Date();
+  nextHour.setUTCHours(nextHour.getUTCHours() + 1, 0, 0, 0);
+  return nextHour;
 }
 
 // sender aur global limit check kr rhe
 export async function checkAndConsumeRateLimit(
-    senderId: string,
-    senderMaxOverride?: number | null
+  senderId: string,
+  senderMaxOverride?: number | null,
+  campaignId?: string
 ): Promise<RateLimitCheckResult> {
-    const hourBucket = getCurrentHourBucket();
-    const senderLimit = senderMaxOverride || SENDER_MAX_PER_HOUR;
+  const hourBucket = getCurrentHourBucket();
+  const senderLimit = senderMaxOverride || SENDER_MAX_PER_HOUR;
 
-    const senderKey = `ratelimit:${senderId}:${hourBucket}`;
-    const globalKey = `ratelimit:global:${hourBucket}`;
+  const senderKey = campaignId ? `ratelimit:${senderId}:${campaignId}:${hourBucket}` : `ratelimit:${senderId}:${hourBucket}`;
+  const globalKey = `ratelimit:global:${hourBucket}`;
 
     const currentSenderCount = parseInt((await redis.get(senderKey)) || '0', 10);
 

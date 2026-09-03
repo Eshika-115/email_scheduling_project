@@ -67,24 +67,27 @@ export async function getNextRoundrobinSender(userId: string, jobIndex: number):
   });
 
   if (senders.length === 0) {
-    senders = await prisma.sender.findMany({
-      orderBy: { createdAt: 'asc' },
-    });
-  }
+    // Create dedicated sender for this specific userId
+    const testAccount = await nodemailer.createTestAccount().catch(() => null);
+    const senderEmail = testAccount ? testAccount.user : `sender-${userId.slice(0, 8)}@ethereal.email`;
+    const smtpConfig = testAccount ? {
+      host: testAccount.smtp.host,
+      port: testAccount.smtp.port,
+      user: testAccount.user,
+      pass: testAccount.pass,
+    } : {
+      host: 'smtp.ethereal.email',
+      port: 587,
+      user: senderEmail,
+      pass: 'testpass123',
+    };
 
-  if (senders.length === 0) {
-    const testAccount = await nodemailer.createTestAccount();
     const newSender = await prisma.sender.create({
       data: {
         userId,
-        email: testAccount.user,
-        smtpConfig: {
-          host: testAccount.smtp.host,
-          port: testAccount.smtp.port,
-          user: testAccount.user,
-          pass: testAccount.pass,
-        },
-        maxEmailsPerHour: 50,
+        email: senderEmail,
+        smtpConfig,
+        maxEmailsPerHour: 1000,
       },
     });
     return newSender;
