@@ -1,11 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
+import RedisStore from 'connect-redis';
 import passport from 'passport';
 import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
 import { emailQueue } from './queues/emailQueue';
+import { redisClient } from './config/redis';
 
 import authRoutes from './routes/authRoutes';
 import campaignRoutes from './routes/campaignRoutes';
@@ -47,6 +49,7 @@ app.use(express.json());
 // express session, passport setup
 app.use(
     session({
+        store: new RedisStore({ client: redisClient }),
         secret: process.env.SESSION_SECRET || 'super-secret-express-session-key',
         resave: false,
         saveUninitialized: false,
