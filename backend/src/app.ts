@@ -28,8 +28,9 @@ const allowedOrigins = [
     'http://127.0.0.1:5174',
     'https://frontend-g5vnvlpex-eshika-115s-projects.vercel.app',
 ];
-if (process.env.FRONTEND_URL) {
-    allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/+$/, ''));
+const customFrontendUrl = process.env.FRONTEND_URL || (process.env as any).FRONTENT_URL;
+if (customFrontendUrl) {
+    allowedOrigins.push(customFrontendUrl.replace(/\/+$/, ''));
 }
 
 app.use(

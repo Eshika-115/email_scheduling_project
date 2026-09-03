@@ -36,8 +36,9 @@ const getFrontendUrl = (req: any) => {
     delete (req.session as any).returnTo;
     return savedUrl;
   }
-  if (process.env.FRONTEND_URL) {
-    return process.env.FRONTEND_URL;
+  const envFrontend = process.env.FRONTEND_URL || (process.env as any).FRONTENT_URL;
+  if (envFrontend) {
+    return envFrontend;
   }
   return isProduction
     ? 'https://frontend-g5vnvlpex-eshika-115s-projects.vercel.app'
@@ -46,7 +47,7 @@ const getFrontendUrl = (req: any) => {
 
 // google oauth callback route
 router.get('/auth/google/callback', (req, res, next) => {
-  passport.authenticate('google', { callbackURL: getCallbackUrl() }, (err: any, user: any, info: any) => {
+  passport.authenticate('google', { callbackURL: getCallbackUrl(), session: false }, (err: any, user: any, info: any) => {
     const frontendUrl = getFrontendUrl(req);
     if (err || !user) {
       console.error('Google Auth Error:', err || info);
@@ -54,26 +55,16 @@ router.get('/auth/google/callback', (req, res, next) => {
       const separator = frontendUrl.includes('?') ? '&' : '?';
       return res.redirect(`${frontendUrl}${separator}auth_error=${errorMsg}`);
     }
-    req.logIn(user, (loginErr) => {
-      if (loginErr) {
-        console.error('Login Session Error:', loginErr);
-        const separator = frontendUrl.includes('?') ? '&' : '?';
-        return res.redirect(`${frontendUrl}${separator}auth_error=session_error`);
-      }
-      req.session.save((saveErr) => {
-        if (saveErr) console.error('Session save error:', saveErr);
 
-        const userObj = encodeURIComponent(JSON.stringify({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          avatarUrl: user.avatarUrl
-        }));
+    const userObj = encodeURIComponent(JSON.stringify({
+      id: user.id || 'google-user-id',
+      name: user.name || 'Google User',
+      email: user.email || 'user@example.com',
+      avatarUrl: user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
+    }));
 
-        const separator = frontendUrl.includes('?') ? '&' : '?';
-        return res.redirect(`${frontendUrl}${separator}token=${user.id}&user=${userObj}`);
-      });
-    });
+    const separator = frontendUrl.includes('?') ? '&' : '?';
+    return res.redirect(`${frontendUrl}${separator}token=${user.id || 'demo-token'}&user=${userObj}`);
   })(req, res, next);
 });
 

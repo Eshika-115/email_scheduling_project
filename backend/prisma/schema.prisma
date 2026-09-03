@@ -14,65 +14,62 @@ model User {
   name              String?
   avatarUrl         String?
   createdAt         DateTime           @default(now())
-  
-  senders           Sender[]
   campaigns         EmailCampaign[]
+  senders           Sender[]
   slackIntegrations SlackIntegration[]
 }
 
 model SlackIntegration {
   id          String    @id @default(uuid())
   userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   teamId      String?
   webhookUrl  String?
   accessToken String?
   channel     String?
   connectedAt DateTime  @default(now())
   revokedAt   DateTime?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Sender {
-  id               String      @id @default(uuid())
+  id               String     @id @default(uuid())
   userId           String
-  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   email            String
-  smtpConfig       Json        // Holds host, port, user, pass
+  smtpConfig       Json
   maxEmailsPerHour Int?
-  createdAt        DateTime    @default(now())
-
+  createdAt        DateTime   @default(now())
   jobs             EmailJob[]
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model EmailCampaign {
   id           String     @id @default(uuid())
   userId       String
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   subject      String
   bodyTemplate String
   delaySeconds Int        @default(0)
   hourlyLimit  Int        @default(50)
   startTime    DateTime?
-  status       String     @default("scheduled") // scheduled, running, completed
-  attachments  Json?      // Attached files [{name, size, type}]
+  status       String     @default("scheduled")
   createdAt    DateTime   @default(now())
-
+  attachments  Json?
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   jobs         EmailJob[]
 }
 
 model EmailJob {
   id             String        @id @default(uuid())
   campaignId     String
-  campaign       EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   senderId       String?
-  sender         Sender?       @relation(fields: [senderId], references: [id], onDelete: SetNull)
   recipientEmail String
-  status         String        @default("pending") // pending, scheduled, sending, sent, failed, delayed_rate_limit
+  status         String        @default("pending")
   scheduledFor   DateTime
   sentAt         DateTime?
-  bullJobId      String        @unique // Unique identifier for idempotency
+  bullJobId      String        @unique
   attemptCount   Int           @default(0)
   errorMessage   String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  campaign       EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  sender         Sender?       @relation(fields: [senderId], references: [id])
 }
