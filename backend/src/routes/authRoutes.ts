@@ -45,7 +45,7 @@ const getFrontendUrl = (req: any) => {
     return envFrontend;
   }
   return isProduction
-    ? 'https://frontend-g5vnvlpex-eshika-115s-projects.vercel.app'
+    ? 'https://frontend-git-main-eshika-115s-projects.vercel.app'
     : 'http://localhost:5173';
 };
 

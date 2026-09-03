@@ -26,7 +26,7 @@ const allowedOrigins = [
     'http://localhost:5174',
     'http://127.0.0.1:5173',
     'http://127.0.0.1:5174',
-    'https://frontend-g5vnvlpex-eshika-115s-projects.vercel.app',
+    'https://frontend-git-main-eshika-115s-projects.vercel.app',
 ];
 const customFrontendUrl = process.env.FRONTEND_URL || (process.env as any).FRONTENT_URL;
 if (customFrontendUrl) {
