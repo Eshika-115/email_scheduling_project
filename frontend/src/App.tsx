@@ -3,7 +3,7 @@ import axios from 'axios';
 import { LoginPage } from './components/LoginPage';
 import { DashboardPage } from './components/DashboardPage';
 
-const API_BASE = 'http://localhost:5000/api';
+import { API_BASE } from './config';
 
 export function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

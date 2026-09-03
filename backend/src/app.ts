@@ -16,16 +16,36 @@ import { requireAuth } from './middleware/authMiddleware';
 
 const app = express();
 
-// middleware json, cors aur credentials ke liye (5173 and 5174 allowed)
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+}
+
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+];
+if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/+$/, ''));
+}
+
 app.use(
     cors({
-        origin: ['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174'],
+        origin: (origin, callback) => {
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+                return callback(null, true);
+            }
+            return callback(null, true);
+        },
         credentials: true,
     })
 );
 app.use(express.json());
 
-// express session ,passport setup
+// express session, passport setup
+const isProd = process.env.NODE_ENV === 'production';
 app.use(
     session({
         secret: process.env.SESSION_SECRET || 'super-secret-express-session-key',
@@ -33,7 +53,8 @@ app.use(
         saveUninitialized: false,
         cookie: {
             httpOnly: true,
-            secure: false,
+            secure: isProd,
+            sameSite: isProd ? 'none' : 'lax',
             maxAge: 24 * 60 * 60 * 1000,
         },
     })

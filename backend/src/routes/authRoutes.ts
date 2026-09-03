@@ -11,9 +11,10 @@ router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 
 // google oauth callback route
 router.get(
   '/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: 'http://localhost:5173' }),
+  passport.authenticate('google', { failureRedirect: process.env.FRONTEND_URL || 'http://localhost:5173' }),
   (req, res) => {
-    res.redirect('http://localhost:5173');
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    res.redirect(frontendUrl);
   }
 );
 

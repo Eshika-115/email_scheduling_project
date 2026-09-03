@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import '../styles/LoginPage.css';
 
+import { API_BASE } from '../config';
+
 interface LoginPageProps {
     onLoginSuccess: () => void;
 }
@@ -11,7 +13,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
     // google login OAuth consent screen par redirect kr rhe
     const handleGoogleLogin = () => {
-        window.location.href = 'http://localhost:5000/api/auth/google';
+        window.location.href = `${API_BASE}/auth/google`;
     };
 
     const handleSubmit = (e: React.FormEvent) => {

@@ -5,7 +5,7 @@ import { EmailDetailPage } from './EmailDetailPage';
 import { ComposeEmailPage } from './ComposeEmailPage';
 import '../styles/DashboardPage.css';
 
-const API_BASE = 'http://localhost:5000/api';
+import { API_BASE } from '../config';
 
 interface EmailJob {
     id: string;

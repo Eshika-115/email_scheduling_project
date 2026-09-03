@@ -3,7 +3,7 @@ import axios from 'axios';
 import { ArrowLeft, Paperclip, Clock, Calendar, Bold, Italic, Underline, List, Quote, AlignLeft, Upload, X, FileText } from 'lucide-react';
 import '../styles/ComposeEmailPage.css';
 
-const API_BASE = 'http://localhost:5000/api';
+import { API_BASE } from '../config';
 
 interface AttachedFile {
     name: string;
