@@ -35,7 +35,21 @@ export const DashboardPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [showComposePage, setShowComposePage] = useState(false);
     const [selectedJob, setSelectedJob] = useState<EmailJob | null>(null);
-    const [userProfile, setUserProfile] = useState({
+    const storedUserStr = localStorage.getItem('reachinbox_user');
+    const initialUser = storedUserStr ? (() => {
+        try {
+            const parsed = JSON.parse(storedUserStr);
+            return {
+                name: parsed.name || 'Oliver Brown',
+                email: parsed.email || 'oliver.brown@domain.io',
+                avatar: parsed.avatarUrl || parsed.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+            };
+        } catch (e) {
+            return null;
+        }
+    })() : null;
+
+    const [userProfile, setUserProfile] = useState(initialUser || {
         name: 'Oliver Brown',
         email: 'oliver.brown@domain.io',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
@@ -54,11 +68,13 @@ export const DashboardPage: React.FC = () => {
             setAnalytics(analyticsRes.data.summary || null);
 
             if (meRes.data.user) {
+                const u = meRes.data.user;
                 setUserProfile({
-                    name: meRes.data.user.name || 'Oliver Brown',
-                    email: meRes.data.user.email || 'oliver.brown@domain.io',
-                    avatar: meRes.data.user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+                    name: u.name || 'Oliver Brown',
+                    email: u.email || 'oliver.brown@domain.io',
+                    avatar: u.avatarUrl || u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
                 });
+                localStorage.setItem('reachinbox_user', JSON.stringify(u));
             }
         } catch (err) {
             console.error('Fetch error:', err);
@@ -78,9 +94,11 @@ export const DashboardPage: React.FC = () => {
 
     const handleLogout = async () => {
         try {
+            localStorage.clear();
             await axios.post(`${API_BASE}/auth/logout`, {}, { withCredentials: true });
             window.location.reload();
         } catch (err) {
+            localStorage.clear();
             window.location.reload();
         }
     };

@@ -36,16 +36,28 @@ router.get('/auth/google/callback', (req, res, next) => {
     const frontendUrl = getFrontendUrl(req);
     if (err || !user) {
       console.error('Google Auth Error:', err || info);
-      return res.redirect(frontendUrl);
+      const errorMsg = encodeURIComponent(err?.message || 'Authentication failed');
+      const separator = frontendUrl.includes('?') ? '&' : '?';
+      return res.redirect(`${frontendUrl}${separator}auth_error=${errorMsg}`);
     }
     req.logIn(user, (loginErr) => {
       if (loginErr) {
         console.error('Login Session Error:', loginErr);
-        return res.redirect(frontendUrl);
+        const separator = frontendUrl.includes('?') ? '&' : '?';
+        return res.redirect(`${frontendUrl}${separator}auth_error=session_error`);
       }
       req.session.save((saveErr) => {
         if (saveErr) console.error('Session save error:', saveErr);
-        return res.redirect(frontendUrl);
+
+        const userObj = encodeURIComponent(JSON.stringify({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          avatarUrl: user.avatarUrl
+        }));
+
+        const separator = frontendUrl.includes('?') ? '&' : '?';
+        return res.redirect(`${frontendUrl}${separator}token=${user.id}&user=${userObj}`);
       });
     });
   })(req, res, next);
