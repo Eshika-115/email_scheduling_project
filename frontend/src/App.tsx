@@ -20,7 +20,7 @@ export function App() {
       if (userParam || tokenParam) {
         try {
           if (userParam) {
-            const parsedUser = JSON.parse(decodeURIComponent(userParam));
+            const parsedUser = JSON.parse(userParam);
             localStorage.setItem('reachinbox_user', JSON.stringify(parsedUser));
           }
           if (tokenParam) {
