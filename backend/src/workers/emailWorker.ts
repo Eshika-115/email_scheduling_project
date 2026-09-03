@@ -53,9 +53,8 @@ export const emailWorker = new Worker<any>(
       throw new Error(err);
     }
 
-    const campaignLimit = emailJob.campaign.hourlyLimit && emailJob.campaign.hourlyLimit > 0 ? emailJob.campaign.hourlyLimit : 50;
-    const senderLimit = sender.maxEmailsPerHour || 50;
-    const effectiveHourlyLimit = Math.min(campaignLimit, senderLimit);
+    const campaignLimit = emailJob.campaign.hourlyLimit && emailJob.campaign.hourlyLimit > 0 ? emailJob.campaign.hourlyLimit : undefined;
+    const effectiveHourlyLimit = campaignLimit || sender.maxEmailsPerHour || 50;
 
     const rateLimit = await checkAndConsumeRateLimit(sender.id, effectiveHourlyLimit);
     if (!rateLimit.allowed) {
