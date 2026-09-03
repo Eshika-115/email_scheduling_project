@@ -4,12 +4,14 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const defaultCallback = process.env.NODE_ENV === 'production'
+const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER || !!process.env.RENDER_SERVICE_ID;
+
+const defaultCallback = isProduction
     ? 'https://outbox-lab-assignment.onrender.com/api/auth/google/callback'
     : 'http://localhost:5000/api/auth/google/callback';
 
 let callbackURL = process.env.GOOGLE_CALLBACK_URL || defaultCallback;
-if (process.env.NODE_ENV === 'production' && callbackURL.includes('localhost')) {
+if (isProduction && callbackURL.includes('localhost')) {
     callbackURL = 'https://outbox-lab-assignment.onrender.com/api/auth/google/callback';
 }
 

@@ -9,10 +9,11 @@ const router = Router();
 router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 const getFrontendUrl = () => {
-  if (process.env.FRONTEND_URL) {
+  const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER || !!process.env.RENDER_SERVICE_ID;
+  if (process.env.FRONTEND_URL && !process.env.FRONTEND_URL.includes('localhost')) {
     return process.env.FRONTEND_URL;
   }
-  return process.env.NODE_ENV === 'production'
+  return isProduction
     ? 'https://frontend-xl-blue-19gueprtlq.vercel.app'
     : 'http://localhost:5173';
 };
