@@ -19,6 +19,17 @@ router.get('/analytics', async (req, res) => {
     } else if (activeUserEmail) {
       userJobWhere.campaign = { user: { email: activeUserEmail } };
       userCampaignWhere.user = { email: activeUserEmail };
+    } else {
+      return res.json({
+        summary: {
+          totalCampaigns: 0,
+          totalJobs: 0,
+          sentCount: 0,
+          failedCount: 0,
+          delayedCount: 0,
+          pendingCount: 0,
+        },
+      });
     }
 
     const totalCampaigns = await prisma.emailCampaign.count({ where: userCampaignWhere });

@@ -80,6 +80,8 @@ router.get('/jobs', async (req, res) => {
       whereClause.campaign = { userId: activeUserId };
     } else if (activeUserEmail) {
       whereClause.campaign = { user: { email: activeUserEmail } };
+    } else {
+      return res.json({ jobs: [] });
     }
 
     const jobs = await prisma.emailJob.findMany({

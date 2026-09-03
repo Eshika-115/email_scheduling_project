@@ -59,20 +59,29 @@ export const DashboardPage: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const activeUserEmail = userProfile?.email;
+            let activeUserEmail = userProfile?.email;
+            const stored = localStorage.getItem('reachinbox_user');
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (parsed.email) activeUserEmail = parsed.email;
+                } catch (e) {}
+            }
+
             const [jobsRes, analyticsRes, meRes] = await Promise.all([
                 axios.get(`${API_BASE}/jobs`, { params: { userEmail: activeUserEmail } }),
                 axios.get(`${API_BASE}/analytics`, { params: { userEmail: activeUserEmail } }),
                 axios.get(`${API_BASE}/auth/me`, { withCredentials: true }),
             ]);
+
             setJobs(jobsRes.data.jobs || []);
             setAnalytics(analyticsRes.data.summary || null);
 
             if (meRes.data.user) {
                 const u = meRes.data.user;
                 setUserProfile({
-                    name: u.name || 'Oliver Brown',
-                    email: u.email || 'oliver.brown@domain.io',
+                    name: u.name || 'User',
+                    email: u.email || activeUserEmail || 'user@example.com',
                     avatar: u.avatarUrl || u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
                 });
                 localStorage.setItem('reachinbox_user', JSON.stringify(u));
@@ -83,7 +92,6 @@ export const DashboardPage: React.FC = () => {
             setLoading(false);
         }
     };
-
 
     useEffect(() => {
         fetchData();
@@ -104,19 +112,30 @@ export const DashboardPage: React.FC = () => {
         }
     };
 
+    const scheduledCount = analytics?.pendingCount ?? jobs.filter(j => j.status === 'pending' || j.status === 'delayed_rate_limit').length;
+    const sentCount = jobs.filter(j => j.status === 'sent' || j.status === 'sending').length || analytics?.sentCount || 0;
 
-    const filteredJobs = jobs.filter((job) => {
-        const matchesTab =
-            activeTab === 'scheduled'
-                ? job.status === 'pending' || job.status === 'delayed_rate_limit'
-                : job.status === 'sent' || job.status === 'sending';
+    const filteredJobs = jobs
+        .filter((job) => {
+            const matchesTab =
+                activeTab === 'scheduled'
+                    ? job.status === 'pending' || job.status === 'delayed_rate_limit'
+                    : job.status === 'sent' || job.status === 'sending';
 
-        const matchesSearch =
-            job.recipientEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            job.campaign?.subject?.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesSearch =
+                job.recipientEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                job.campaign?.subject?.toLowerCase().includes(searchQuery.toLowerCase());
 
-        return matchesTab && matchesSearch;
-    });
+            return matchesTab && matchesSearch;
+        })
+        .sort((a, b) => {
+            if (activeTab === 'sent') {
+                const timeA = (a as any).sentAt ? new Date((a as any).sentAt).getTime() : new Date(a.scheduledFor).getTime();
+                const timeB = (b as any).sentAt ? new Date((b as any).sentAt).getTime() : new Date(b.scheduledFor).getTime();
+                return timeB - timeA;
+            }
+            return new Date(a.scheduledFor).getTime() - new Date(b.scheduledFor).getTime();
+        });
 
     if (showComposePage) {
         return <ComposeEmailPage userEmail={userProfile.email} onBack={() => { setShowComposePage(false); fetchData(); }} />;
@@ -163,7 +182,7 @@ export const DashboardPage: React.FC = () => {
                         <Clock size={16} />
                         <span>Scheduled</span>
                     </div>
-                    <span className="nav-count">{analytics?.pendingCount || 0}</span>
+                    <span className="nav-count">{scheduledCount}</span>
                 </div>
 
                 <div
@@ -174,7 +193,7 @@ export const DashboardPage: React.FC = () => {
                         <Send size={16} />
                         <span>Sent</span>
                     </div>
-                    <span className="nav-count">{analytics?.sentCount || 0}</span>
+                    <span className="nav-count">{sentCount}</span>
                 </div>
             </aside>
 
