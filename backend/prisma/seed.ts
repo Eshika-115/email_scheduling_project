@@ -7,6 +7,7 @@ async function main() {
     console.log('Seeding initial data with real Ethereal credentials');
 
     // Create default test user
+
     const user = await prisma.user.upsert({
         where: { email: 'demo@reachinbox.ai' },
         update: {},
@@ -18,45 +19,33 @@ async function main() {
         },
     });
 
-    // clearn invalid sender
-    await prisma.sender.deleteMany({ where: { userId: user.id } });
 
-    // Generate 2 working Ethereal accounts
-
-    console.log('Generating Ethereal Acc1');
-    const eth1 = await nodemailer.createTestAccount();
-    const sender1 = await prisma.sender.create({
+    await prisma.sender.updateMany({
         data: {
-            userId: user.id,
-            email: eth1.user,
-            smtpConfig: {
-                host: eth1.smtp.host,
-                port: eth1.smtp.port,
-                user: eth1.user,
-                pass: eth1.pass,
-            },
-            maxEmailsPerHour: 50,
+            maxEmailsPerHour: 1000,
         },
     });
 
-    console.log('Generating Ethereal Acc2');
-    const eth2 = await nodemailer.createTestAccount();
-    const sender2 = await prisma.sender.create({
-        data: {
-            userId: user.id,
-            email: eth2.user,
-            smtpConfig: {
-                host: eth2.smtp.host,
-                port: eth2.smtp.port,
-                user: eth2.user,
-                pass: eth2.pass,
-            },
-            maxEmailsPerHour: 50,
-        },
-    });
 
-    console.log('Seeding completed with valid Ethereal cred');
-    console.log(`User: ${user.email} | Senders: ${sender1.email}, ${sender2.email}`);
+    const count = await prisma.sender.count();
+    if (count === 0) {
+        const eth1 = await nodemailer.createTestAccount();
+        await prisma.sender.create({
+            data: {
+                userId: user.id,
+                email: eth1.user,
+                smtpConfig: {
+                    host: eth1.smtp.host,
+                    port: eth1.smtp.port,
+                    user: eth1.user,
+                    pass: eth1.pass,
+                },
+                maxEmailsPerHour: 1000,
+            },
+        });
+    }
+
+    console.log('Seeding completed successfully');
 }
 
 main()

@@ -54,6 +54,7 @@ model EmailCampaign {
   hourlyLimit  Int        @default(50)
   startTime    DateTime?
   status       String     @default("scheduled") // scheduled, running, completed
+  attachments  Json?      // Attached files [{name, size, type}]
   createdAt    DateTime   @default(now())
 
   jobs         EmailJob[]
