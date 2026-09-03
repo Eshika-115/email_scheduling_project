@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const defaultCallback = process.env.NODE_ENV === 'production'
-    ? 'https://outbox-lab-assignment-8gj5.onrender.com/api/auth/google/callback'
+    ? 'https://outbox-lab-assignment.onrender.com/api/auth/google/callback'
     : 'http://localhost:5000/api/auth/google/callback';
 
 // google oauth setup 
