@@ -13,7 +13,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
     // google login OAuth consent screen par redirect kr rhe
     const handleGoogleLogin = () => {
-        window.location.href = `${API_BASE}/auth/google`;
+        const origin = window.location.origin;
+        window.location.href = `${API_BASE}/auth/google?returnTo=${encodeURIComponent(origin)}`;
     };
 
     const handleSubmit = (e: React.FormEvent) => {

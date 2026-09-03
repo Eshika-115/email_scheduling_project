@@ -6,22 +6,32 @@ const router = Router();
 
 // redirect goole auth
 
-router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/auth/google', (req, res, next) => {
+  if (req.query.returnTo && typeof req.query.returnTo === 'string') {
+    (req.session as any).returnTo = req.query.returnTo;
+  }
+  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+});
 
-const getFrontendUrl = () => {
+const getFrontendUrl = (req: any) => {
   const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER || !!process.env.RENDER_SERVICE_ID;
-  if (process.env.FRONTEND_URL && !process.env.FRONTEND_URL.includes('localhost')) {
+  const savedUrl = (req.session as any)?.returnTo;
+  if (savedUrl) {
+    delete (req.session as any).returnTo;
+    return savedUrl;
+  }
+  if (process.env.FRONTEND_URL) {
     return process.env.FRONTEND_URL;
   }
   return isProduction
-    ? 'https://frontend-xl-blue-19gueprtlq.vercel.app'
+    ? 'https://frontend-g5vnvlpex-eshika-115s-projects.vercel.app'
     : 'http://localhost:5173';
 };
 
 // google oauth callback route
 router.get('/auth/google/callback', (req, res, next) => {
+  const frontendUrl = getFrontendUrl(req);
   passport.authenticate('google', (err: any, user: any, info: any) => {
-    const frontendUrl = getFrontendUrl();
     if (err || !user) {
       console.error('Google Auth Error:', err || info);
       return res.redirect(frontendUrl);
