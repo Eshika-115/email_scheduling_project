@@ -10,7 +10,9 @@ router.get('/auth/google', (req, res, next) => {
   if (req.query.returnTo && typeof req.query.returnTo === 'string') {
     (req.session as any).returnTo = req.query.returnTo;
   }
-  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+  req.session.save(() => {
+    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+  });
 });
 
 const getFrontendUrl = (req: any) => {
@@ -30,8 +32,8 @@ const getFrontendUrl = (req: any) => {
 
 // google oauth callback route
 router.get('/auth/google/callback', (req, res, next) => {
-  const frontendUrl = getFrontendUrl(req);
   passport.authenticate('google', (err: any, user: any, info: any) => {
+    const frontendUrl = getFrontendUrl(req);
     if (err || !user) {
       console.error('Google Auth Error:', err || info);
       return res.redirect(frontendUrl);
@@ -41,7 +43,10 @@ router.get('/auth/google/callback', (req, res, next) => {
         console.error('Login Session Error:', loginErr);
         return res.redirect(frontendUrl);
       }
-      return res.redirect(frontendUrl);
+      req.session.save((saveErr) => {
+        if (saveErr) console.error('Session save error:', saveErr);
+        return res.redirect(frontendUrl);
+      });
     });
   })(req, res, next);
 });

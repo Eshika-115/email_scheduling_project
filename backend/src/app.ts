@@ -15,19 +15,16 @@ import senderRoutes from './routes/senderRoutes';
 import { requireAuth } from './middleware/authMiddleware';
 
 const app = express();
+app.set('trust proxy', 1);
 
 const isProd = process.env.NODE_ENV === 'production' || !!process.env.RENDER || !!process.env.RENDER_SERVICE_ID;
-
-if (isProd) {
-    app.set('trust proxy', 1);
-}
 
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:5174',
     'http://127.0.0.1:5173',
     'http://127.0.0.1:5174',
-    'https://frontend-xl-blue-19gueprtlq.vercel.app',
+    'https://frontend-g5vnvlpex-eshika-115s-projects.vercel.app',
 ];
 if (process.env.FRONTEND_URL) {
     allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/+$/, ''));
@@ -37,7 +34,7 @@ app.use(
     cors({
         origin: (origin, callback) => {
             if (!origin) return callback(null, true);
-            if (allowedOrigins.includes(origin) || !isProd) {
+            if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin) || !isProd) {
                 return callback(null, true);
             }
             return callback(null, true);
@@ -53,6 +50,7 @@ app.use(
         secret: process.env.SESSION_SECRET || 'super-secret-express-session-key',
         resave: false,
         saveUninitialized: false,
+        proxy: true,
         cookie: {
             httpOnly: true,
             secure: isProd,
