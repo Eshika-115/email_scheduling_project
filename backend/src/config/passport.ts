@@ -4,13 +4,17 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+const defaultCallback = process.env.NODE_ENV === 'production'
+    ? 'https://outbox-lab-assignment-8gj5.onrender.com/api/auth/google/callback'
+    : 'http://localhost:5000/api/auth/google/callback';
+
 // google oauth setup 
 passport.use(
     new GoogleStrategy(
         {
             clientID: process.env.GOOGLE_CLIENT_ID || 'google-demo-client-id',
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'google-demo-client-secret',
-            callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback',
+            callbackURL: process.env.GOOGLE_CALLBACK_URL || defaultCallback,
         },
         async (accessToken, refreshToken, profile, done) => {
             try {
