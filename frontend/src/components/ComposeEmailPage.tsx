@@ -159,9 +159,9 @@ export const ComposeEmailPage: React.FC<ComposeEmailPageProps> = ({ userEmail = 
         }
     };
 
-    const handlePresetSelect = (hoursOffset: number, targetHour: number = 10) => {
+    const handlePresetSelect = (daysOffset: number = 1, targetHour: number = 10) => {
         const d = new Date();
-        d.setDate(d.getDate() + 1);
+        d.setDate(d.getDate() + daysOffset);
         d.setHours(targetHour, 0, 0, 0);
         setScheduledDateTime(d.toISOString().slice(0, 16));
     };
