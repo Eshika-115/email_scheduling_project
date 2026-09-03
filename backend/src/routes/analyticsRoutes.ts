@@ -6,14 +6,28 @@ const router = Router();
 
 router.get('/analytics', async (req, res) => {
   try {
-    const totalCampaigns = await prisma.emailCampaign.count();
-    const totalJobs = await prisma.emailJob.count();
+    const { userId, userEmail } = req.query;
+    const activeUserId = (req.user as any)?.id || (userId ? String(userId) : undefined);
+    const activeUserEmail = (req.user as any)?.email || (userEmail ? String(userEmail) : undefined);
 
-    const sentCount = await prisma.emailJob.count({ where: { status: 'sent' } });
-    const failedCount = await prisma.emailJob.count({ where: { status: 'failed' } });
-    const delayedCount = await prisma.emailJob.count({ where: { status: 'delayed_rate_limit' } });
-    const pendingOnlyCount = await prisma.emailJob.count({ where: { status: 'pending' } });
+    const userJobWhere: any = {};
+    const userCampaignWhere: any = {};
 
+    if (activeUserId) {
+      userJobWhere.campaign = { userId: activeUserId };
+      userCampaignWhere.userId = activeUserId;
+    } else if (activeUserEmail) {
+      userJobWhere.campaign = { user: { email: activeUserEmail } };
+      userCampaignWhere.user = { email: activeUserEmail };
+    }
+
+    const totalCampaigns = await prisma.emailCampaign.count({ where: userCampaignWhere });
+    const totalJobs = await prisma.emailJob.count({ where: userJobWhere });
+
+    const sentCount = await prisma.emailJob.count({ where: { ...userJobWhere, status: 'sent' } });
+    const failedCount = await prisma.emailJob.count({ where: { ...userJobWhere, status: 'failed' } });
+    const delayedCount = await prisma.emailJob.count({ where: { ...userJobWhere, status: 'delayed_rate_limit' } });
+    const pendingOnlyCount = await prisma.emailJob.count({ where: { ...userJobWhere, status: 'pending' } });
 
     const scheduledCount = pendingOnlyCount + delayedCount;
 

@@ -2,6 +2,8 @@ import { prisma } from '../config/db';
 
 export interface CreateCampaignInput {
   userId?: string;
+  userEmail?: string;
+  userName?: string;
   subject: string;
   bodyTemplate: string;
   recipientEmails: string[];
@@ -13,10 +15,28 @@ export interface CreateCampaignInput {
 
 // emailjob record in database campaign create
 export async function createCampaign(input: CreateCampaignInput) {
-  const { userId, subject, bodyTemplate, recipientEmails, delaySeconds = 0, hourlyLimit = 50, startTime, attachments } = input;
+  const { userId, userEmail, userName, subject, bodyTemplate, recipientEmails, delaySeconds = 0, hourlyLimit = 50, startTime, attachments } = input;
 
-  // DB me real user fetch ya create kr rhe
-  let user = await prisma.user.findFirst();
+  // Resolve active logged in user by userId or userEmail
+  let user: any = null;
+  if (userId) {
+    user = await prisma.user.findUnique({ where: { id: userId } });
+  }
+  if (!user && userEmail) {
+    user = await prisma.user.findUnique({ where: { email: userEmail } });
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          googleId: `google-${Date.now()}`,
+          email: userEmail,
+          name: userName || userEmail.split('@')[0],
+        },
+      });
+    }
+  }
+  if (!user) {
+    user = await prisma.user.findFirst();
+  }
   if (!user) {
     user = await prisma.user.create({
       data: {

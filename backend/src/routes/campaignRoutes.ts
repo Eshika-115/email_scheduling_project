@@ -8,14 +8,19 @@ const router = Router();
 // campaign create & enqueue route
 router.post('/campaigns', async (req, res) => {
   try {
-    const { userId, subject, bodyTemplate, recipientEmails, delaySeconds, hourlyLimit, startTime, attachments } = req.body;
+    const { userId, userEmail, userName, subject, bodyTemplate, recipientEmails, delaySeconds, hourlyLimit, startTime, attachments } = req.body;
 
     if (!subject || !bodyTemplate || !recipientEmails) {
       return res.status(400).json({ error: 'Missing required campaign fields' });
     }
 
+    const activeUserId = userId || (req.user as any)?.id;
+    const activeUserEmail = userEmail || (req.user as any)?.email;
+
     const campaign = await createCampaign({
-      userId,
+      userId: activeUserId,
+      userEmail: activeUserEmail,
+      userName,
       subject,
       bodyTemplate,
       recipientEmails,
@@ -26,7 +31,6 @@ router.post('/campaigns', async (req, res) => {
     });
 
     if (campaign && campaign.jobs) {
-
       for (const job of campaign.jobs) {
         await enqueueEmailJob(job.id, new Date(job.scheduledFor), {
           emailJobId: job.id,
@@ -44,7 +48,6 @@ router.post('/campaigns', async (req, res) => {
 });
 
 // campaign detail route
-
 router.get('/campaigns/:id', async (req, res) => {
   try {
     const campaign = await prisma.emailCampaign.findUnique({
@@ -62,14 +65,22 @@ router.get('/campaigns/:id', async (req, res) => {
   }
 });
 
-
 router.get('/jobs', async (req, res) => {
   try {
-    const { status, campaignId } = req.query;
+    const { status, campaignId, userId, userEmail } = req.query;
     const whereClause: any = {};
 
     if (status) whereClause.status = String(status);
     if (campaignId) whereClause.campaignId = String(campaignId);
+
+    const activeUserId = (req.user as any)?.id || (userId ? String(userId) : undefined);
+    const activeUserEmail = (req.user as any)?.email || (userEmail ? String(userEmail) : undefined);
+
+    if (activeUserId) {
+      whereClause.campaign = { userId: activeUserId };
+    } else if (activeUserEmail) {
+      whereClause.campaign = { user: { email: activeUserEmail } };
+    }
 
     const jobs = await prisma.emailJob.findMany({
       where: whereClause,

@@ -143,6 +143,7 @@ export const ComposeEmailPage: React.FC<ComposeEmailPageProps> = ({ userEmail = 
         try {
             await axios.post(`${API_BASE}/campaigns`, {
                 userId: 'demo-user-id',
+                userEmail: userEmail || fromEmail,
                 subject,
                 bodyTemplate: bodyText,
                 recipientEmails: finalRecipients,

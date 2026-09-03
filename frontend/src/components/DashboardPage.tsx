@@ -59,9 +59,10 @@ export const DashboardPage: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
+            const activeUserEmail = userProfile?.email;
             const [jobsRes, analyticsRes, meRes] = await Promise.all([
-                axios.get(`${API_BASE}/jobs`),
-                axios.get(`${API_BASE}/analytics`),
+                axios.get(`${API_BASE}/jobs`, { params: { userEmail: activeUserEmail } }),
+                axios.get(`${API_BASE}/analytics`, { params: { userEmail: activeUserEmail } }),
                 axios.get(`${API_BASE}/auth/me`, { withCredentials: true }),
             ]);
             setJobs(jobsRes.data.jobs || []);
