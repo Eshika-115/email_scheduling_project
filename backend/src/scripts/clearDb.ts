@@ -30,7 +30,7 @@ async function clearData() {
   redis.disconnect();
   process.exit(0);
 }
-
+//eshika
 clearData().catch((err) => {
   console.error('Clear error:', err);
   redis.disconnect();
