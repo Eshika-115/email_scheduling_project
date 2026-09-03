@@ -1,9 +1,11 @@
 import { Client } from '@elastic/elasticsearch';
 
-const esNode = process.env.ELASTICSEARCH_NODE || 'http://localhost:9200';
+const esUrl = process.env.ELASTICSEARCH_URL || process.env.ELASTICSEARCH_NODE || 'http://localhost:9200';
+const esApiKey = process.env.ELASTICSEARCH_API_KEY;
 
 export const esClient = new Client({
-    node: esNode,
+    node: esUrl,
+    auth: esApiKey ? { apiKey: esApiKey } : undefined,
 });
 
 const INDEX_NAME = 'email-logs';
