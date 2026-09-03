@@ -4,6 +4,18 @@ import '../config/passport';
 
 const router = Router();
 
+const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER || !!process.env.RENDER_SERVICE_ID;
+
+const getCallbackUrl = () => {
+  const envCallback = process.env.GOOGLE_CALLBACK_URL?.trim().replace(/^["']|["']$/g, '');
+  if (envCallback && !envCallback.includes('localhost')) {
+    return envCallback;
+  }
+  return isProduction
+    ? 'https://outbox-lab-assignment.onrender.com/api/auth/google/callback'
+    : 'http://localhost:5000/api/auth/google/callback';
+};
+
 // redirect goole auth
 
 router.get('/auth/google', (req, res, next) => {
@@ -11,12 +23,14 @@ router.get('/auth/google', (req, res, next) => {
     (req.session as any).returnTo = req.query.returnTo;
   }
   req.session.save(() => {
-    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+    passport.authenticate('google', {
+      scope: ['profile', 'email'],
+      callbackURL: getCallbackUrl(),
+    })(req, res, next);
   });
 });
 
 const getFrontendUrl = (req: any) => {
-  const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER || !!process.env.RENDER_SERVICE_ID;
   const savedUrl = (req.session as any)?.returnTo;
   if (savedUrl) {
     delete (req.session as any).returnTo;
@@ -32,7 +46,7 @@ const getFrontendUrl = (req: any) => {
 
 // google oauth callback route
 router.get('/auth/google/callback', (req, res, next) => {
-  passport.authenticate('google', (err: any, user: any, info: any) => {
+  passport.authenticate('google', { callbackURL: getCallbackUrl() }, (err: any, user: any, info: any) => {
     const frontendUrl = getFrontendUrl(req);
     if (err || !user) {
       console.error('Google Auth Error:', err || info);
