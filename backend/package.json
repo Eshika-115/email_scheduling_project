@@ -4,8 +4,10 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "build": "npx prisma generate",
-    "start": "npx tsx src/index.ts",
+    "build": "prisma generate",
+    "bulid": "prisma generate",
+    "start": "tsx src/index.ts",
+    "dev": "tsx src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

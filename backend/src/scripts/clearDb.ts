@@ -1,11 +1,7 @@
-import Redis from 'ioredis';
+import { redisClient as redis } from '../config/redis';
 import { prisma } from '../config/db';
 import { emailQueue } from '../queues/emailQueue';
 
-const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6380', 10),
-});
 
 async function clearData() {
   console.log('Clearing all load test emails, campaigns, and Redis rate limit counters...');

@@ -1,9 +1,5 @@
-import Redis from 'ioredis';
+import { redisClient as redis } from '../config/redis';
 
-const redis = new Redis({
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6380', 10),
-});
 
 // env se rate limit liya
 const GLOBAL_MAX_PER_HOUR = parseInt(process.env.MAX_EMAILS_PER_HOUR || '200', 10);
