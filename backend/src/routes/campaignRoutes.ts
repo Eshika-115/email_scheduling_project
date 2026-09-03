@@ -28,7 +28,7 @@ router.post('/campaigns', async (req, res) => {
       hourlyLimit,
       startTime,
       attachments,
-    });
+    } as any);
 
     if (campaign && campaign.jobs) {
       for (const job of campaign.jobs) {
@@ -90,6 +90,27 @@ router.get('/jobs', async (req, res) => {
     });
 
     res.json({ jobs });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Clear all DB records, queues, and Redis rate limiters on live deployment
+router.all('/clear', async (req, res) => {
+  try {
+    const { redisClient } = await import('../config/redis');
+    const { emailQueue } = await import('../queues/emailQueue');
+
+    await redisClient.flushall();
+    await prisma.emailJob.deleteMany({});
+    await prisma.emailCampaign.deleteMany({});
+    await emailQueue.drain();
+    await emailQueue.clean(0, 10000, 'completed');
+    await emailQueue.clean(0, 10000, 'failed');
+    await emailQueue.clean(0, 10000, 'delayed');
+    await emailQueue.clean(0, 10000, 'active');
+
+    res.json({ success: true, message: 'Cloud Database, Queue, and Redis Rate-Limiter are 100% Cleaned!' });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
