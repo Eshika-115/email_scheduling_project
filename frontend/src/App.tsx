@@ -9,10 +9,8 @@ export function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // app boot hone par auth status check kr rhe
   useEffect(() => {
     const checkAuthStatus = async () => {
-      // 1. Check URL query parameters (Google OAuth cross-domain redirect)
       const params = new URLSearchParams(window.location.search);
       const userParam = params.get('user');
       const tokenParam = params.get('token');
@@ -35,7 +33,6 @@ export function App() {
         }
       }
 
-      // 2. Check localStorage auth state
       const storedUser = localStorage.getItem('reachinbox_user');
       if (storedUser) {
         setIsLoggedIn(true);
@@ -43,7 +40,6 @@ export function App() {
         return;
       }
 
-      // 3. Fallback to API session check
       try {
         const res = await axios.get(`${API_BASE}/auth/me`, { withCredentials: true });
         if (res.data.authenticated) {
@@ -70,12 +66,10 @@ export function App() {
     );
   }
 
-  // logged in nahi h  toh login page dikhega 
   if (!isLoggedIn) {
     return <LoginPage onLoginSuccess={() => setIsLoggedIn(true)} />;
   }
 
-  // login done dashboard open
   return <DashboardPage />;
 }
 

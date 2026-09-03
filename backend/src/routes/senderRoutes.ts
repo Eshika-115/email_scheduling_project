@@ -31,12 +31,14 @@ router.post('/senders', async (req, res) => {
         const sender = await prisma.sender.create({
             data: {
                 userId,
-                name: name || user,
                 email: email || user,
-                host,
-                port: parseInt(port || '587', 10),
-                user,
-                pass,
+                smtpConfig: {
+                    name: name || user,
+                    host,
+                    port: parseInt(port || '587', 10),
+                    user,
+                    pass,
+                },
                 maxEmailsPerHour: parseInt(maxEmailsPerHour || '50', 10),
             },
         });

@@ -16,24 +16,28 @@ const getCallbackUrl = () => {
     : 'http://localhost:5000/api/auth/google/callback';
 };
 
-// redirect goole auth
-
 router.get('/auth/google', (req, res, next) => {
-  if (req.query.returnTo && typeof req.query.returnTo === 'string') {
-    (req.session as any).returnTo = req.query.returnTo;
+  if (req.query.returnTo && typeof req.query.returnTo === 'string' && req.session) {
+    req.session.returnTo = req.query.returnTo;
   }
-  req.session.save(() => {
+  const doAuth = () => {
     passport.authenticate('google', {
       scope: ['profile', 'email'],
       callbackURL: getCallbackUrl(),
     })(req, res, next);
-  });
+  };
+
+  if (req.session && typeof req.session.save === 'function') {
+    req.session.save(() => doAuth());
+  } else {
+    doAuth();
+  }
 });
 
 const getFrontendUrl = (req: any) => {
-  const savedUrl = (req.session as any)?.returnTo;
+  const savedUrl = req.session?.returnTo;
   if (savedUrl) {
-    delete (req.session as any).returnTo;
+    delete req.session.returnTo;
     return savedUrl;
   }
   const envFrontend = process.env.FRONTEND_URL || (process.env as any).FRONTENT_URL;
@@ -45,7 +49,6 @@ const getFrontendUrl = (req: any) => {
     : 'http://localhost:5173';
 };
 
-// google oauth callback route
 router.get('/auth/google/callback', (req, res, next) => {
   passport.authenticate('google', { callbackURL: getCallbackUrl(), session: false }, (err: any, user: any, info: any) => {
     const frontendUrl = getFrontendUrl(req);
@@ -68,17 +71,13 @@ router.get('/auth/google/callback', (req, res, next) => {
   })(req, res, next);
 });
 
-// current session status check 
-
 router.get('/auth/me', (req, res) => {
   if (req.isAuthenticated && req.isAuthenticated()) {
-
     return res.json({ authenticated: true, user: req.user });
   }
   res.json({ authenticated: false, user: null });
 });
 
-// logout session 
 router.post('/auth/logout', (req, res) => {
   req.logout((err) => {
     res.json({ success: true, message: 'Logged out successfully' });

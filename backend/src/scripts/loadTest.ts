@@ -39,7 +39,12 @@ async function runLoadTest() {
   const startTime = Date.now();
 
   for (const job of campaign.jobs) {
-    await enqueueEmailJob(job.id, new Date(job.scheduledFor), job.bullJobId);
+    await enqueueEmailJob(job.id, new Date(job.scheduledFor), {
+      emailJobId: job.id,
+      recipientEmail: job.recipientEmail,
+      campaignId: job.campaignId,
+      senderId: job.senderId || undefined,
+    });
   }
 
   const duration = (Date.now() - startTime) / 1000;
@@ -48,7 +53,12 @@ async function runLoadTest() {
 
   console.log('[LoadTest] Testing Idempotency (re-enqueuing duplicate job IDs)...');
   for (const job of campaign.jobs.slice(0, 50)) {
-    await enqueueEmailJob(job.id, new Date(job.scheduledFor), job.bullJobId);
+    await enqueueEmailJob(job.id, new Date(job.scheduledFor), {
+      emailJobId: job.id,
+      recipientEmail: job.recipientEmail,
+      campaignId: job.campaignId,
+      senderId: job.senderId || undefined,
+    });
   }
   console.log('[LoadTest] Idempotency test passed: Zero duplicate jobs added to queue.');
 
